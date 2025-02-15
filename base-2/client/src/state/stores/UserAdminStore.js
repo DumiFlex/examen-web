@@ -1,90 +1,105 @@
-import EventEmitter from '../../utils/EventEmitter'
-import { SERVER } from '../../config/global'
+import EventEmitter from "../../utils/EventEmitter";
+import { SERVER } from "../../config/global";
 
 class UserAdminStore {
-  constructor () {
-    this.data = []
-    this.count = 0
-    this.emitter = new EventEmitter()
+  constructor() {
+    this.data = [];
+    this.count = 0;
+    this.emitter = new EventEmitter();
   }
 
-  async getAll (state) {
+  async getAll(
+    state,
+    pageNumber = "",
+    pageSize = "",
+    filterField = "",
+    filterValue = "",
+    sortField = "",
+    sortOrder = ""
+  ) {
+    try {
+      const response = await fetch(
+        `${SERVER}/admin/users?pageSize=${pageSize || ""}&pageNumber=${
+          pageNumber === "" ? 0 : pageNumber
+        }&filterField=${filterField || ""}&filterValue=${
+          filterValue || ""
+        }&sortField=${sortField || ""}&sortOrder=${sortOrder || ""}`,
+        {
+          headers: {
+            authorization: state.user.data.token,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw response;
+      }
+      const content = await response.json();
+      this.data = content.data;
+      this.count = content.count;
+      this.emitter.emit("GET_USERS_SUCCESS");
+    } catch (err) {
+      console.warn(err);
+      this.emitter.emit("GET_USERS_ERROR");
+    }
+  }
+
+  async createOne(state, user) {
     try {
       const response = await fetch(`${SERVER}/admin/users`, {
+        method: "post",
         headers: {
-          authorization: state.user.data.token
-        }
-      })
-      if (!response.ok) {
-        throw response
-      }
-      const content = await response.json()
-      this.data = content.data
-      this.count = content.count
-      this.emitter.emit('GET_USERS_SUCCESS')
-    } catch (err) {
-      console.warn(err)
-      this.emitter.emit('GET_USERS_ERROR')
-    }
-  }
-
-  async createOne (state, user) {
-    try {
-      const response = await fetch(`${SERVER}/admin/users`, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-          authorization: state.user.data.token
+          "Content-Type": "application/json",
+          authorization: state.user.data.token,
         },
-        body: JSON.stringify(user)
-      })
+        body: JSON.stringify(user),
+      });
       if (!response.ok) {
-        throw response
+        throw response;
       }
-      this.getAll(state)
+      this.getAll(state);
     } catch (err) {
-      console.warn(err)
-      this.emitter.emit('ADD_USER_ERROR')
+      console.warn(err);
+      this.emitter.emit("ADD_USER_ERROR");
     }
   }
 
-  async updateOne (state, id, user) {
+  async updateOne(state, id, user) {
     try {
       const response = await fetch(`${SERVER}/admin/users/${id}`, {
-        method: 'put',
+        method: "put",
         headers: {
-          'Content-Type': 'application/json',
-          authorization: state.user.data.token
+          "Content-Type": "application/json",
+          authorization: state.user.data.token,
         },
-        body: JSON.stringify(user)
-      })
+        body: JSON.stringify(user),
+      });
       if (!response.ok) {
-        throw response
+        throw response;
       }
-      this.getAll(state)
+      this.getAll(state);
     } catch (err) {
-      console.warn(err)
-      this.emitter.emit('SAVE_USER_ERROR')
+      console.warn(err);
+      this.emitter.emit("SAVE_USER_ERROR");
     }
   }
 
-  async deleteOne (state, id) {
+  async deleteOne(state, id) {
     try {
       const response = await fetch(`${SERVER}/admin/users/${id}`, {
-        method: 'delete',
+        method: "delete",
         headers: {
-          authorization: state.user.data.token
-        }
-      })
+          authorization: state.user.data.token,
+        },
+      });
       if (!response.ok) {
-        throw response
+        throw response;
       }
-      this.getAll(state)
+      this.getAll(state);
     } catch (err) {
-      console.warn(err)
-      this.emitter.emit('DELETE_USER_ERROR')
+      console.warn(err);
+      this.emitter.emit("DELETE_USER_ERROR");
     }
   }
 }
 
-export default UserAdminStore
+export default UserAdminStore;
